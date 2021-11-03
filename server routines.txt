@@ -1,0 +1,5 @@
+1. Create a listening port for clients 
+2. Selectively accept or block clients by checking their IP Addresses against the blacklist or the whitelist.
+3. After connecting, the server will request the clients information block. The information block is shared between the G10 client and the G10 server.
+4. 
+5. 

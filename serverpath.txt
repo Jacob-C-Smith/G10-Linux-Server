@@ -1,0 +1,1 @@
+set args -l /mnt/c/Users/j/Desktop/C\ Projects/G10\ Linux\ Server/server.json

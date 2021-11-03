@@ -1,0 +1,24 @@
+{
+    "name"        : "localhost",
+    "host"        : "127.0.0.1",
+    "port"        : 8877,
+    "max players" : 16,
+    "password"    : "password123",
+    "bans"        : [
+        {
+            "host"       : "11.20.22.39",
+            "expiration" : 1623996636,
+            "note"       : ""
+        },
+        {
+            "name"       : "Chris",
+            "expiration" : 1624000000,
+            "note"       : "Text chat spamming"
+        },
+        {
+            "host"      : "168.183.212.227",
+            "expiation" : 0,
+            "note"      : "Permabanned for being a bot"
+        }
+    ] 
+}
