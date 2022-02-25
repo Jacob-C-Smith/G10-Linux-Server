@@ -1,13 +1,13 @@
 #include <G10/GXServer.h>
 
-GXServer_t* createServer  ( )
+GXServer_t *create_server          ( void )
 {
     GXServer_t* ret = calloc(1, sizeof(GXServer_t));
 
     return ret;
 }
 
-GXServer_t* loadServer ( const char path[] ) 
+GXServer_t *load_server            ( const char path[] ) 
 {
     // Initialized data
     FILE*  f = fopen(path,"rb");
@@ -38,18 +38,18 @@ GXServer_t* loadServer ( const char path[] )
         data[i] = '\0';
     }
 
-    return loadServerAsJSON(data);
+    return load_server_as_json(data);
     invalidFile:
     
         printf("\033[31m[G10] [Server] Failed to load file \"%s\"\033[m\n", path);
       
     return 0;
 }
-
-GXServer_t* loadServerAsJSON ( char* token )
+ 
+GXServer_t *load_server_as_json    ( char *token )
 {
     // Initialized data
-    GXServer_t*  ret        = createServer();
+    GXServer_t*  ret        = create_server();
     size_t       len        = strlen(token);
     size_t       tokenCount = GXParseJSON(token, len, 0, (void*)0);
     JSONValue_t* tokens     = calloc(tokenCount, sizeof(JSONValue_t));
@@ -146,7 +146,7 @@ GXServer_t* loadServerAsJSON ( char* token )
         // Set password
         else if (strcmp("password", tokens[j].name)==0)
         {
-            size_t len    = strlen(tokens[j].content.nWhere;
+            size_t len    = strlen(tokens[j].content.nWhere);
             ret->password = calloc(len+1, sizeof(u8));
             strncpy(ret->password, tokens[j].content.nWhere, len);
         }
@@ -156,6 +156,13 @@ GXServer_t* loadServerAsJSON ( char* token )
         {
             // TODO: Process bans as an array of objects
             
+            continue;
+        }
+
+        // Set physics tick rate
+        else if (strcmp("tick rate", tokens[j].name) == 0)
+        {
+            ret->tick_rate = atoi(tokens[j].content.nWhere);
             continue;
         }
     }
@@ -180,9 +187,12 @@ GXServer_t* loadServerAsJSON ( char* token )
         // Set the start time
         time(&ret->startTime);
 
-        // Start a new listening thread
-        pthread_create(&ret->listeningThread,NULL, (void*)&listenForConnections,ret);
+        // Flip the running bit
+        ret->running = true;
 
+        // Start a new listening thread
+        pthread_create(&ret->listeningThread,NULL, (void*)&listen_for_connections,ret);
+        pthread_create(&ret->tickThread, NULL, (void*)&tick_thread, ret );
         printf("\033[34m[G10] [Server] Started a listening thread\n\033[m");
 
 	}
@@ -191,45 +201,46 @@ GXServer_t* loadServerAsJSON ( char* token )
 
     // Couldn't make a socket
     noSocket:
-        gPrintError("[G10] [Server] A listen socket could not be created\n");
+        g_print_error("[G10] [Server] A listen socket could not be created\n");
     return 0;
 
     // Couldn't bind the socket
     noBind:
-        gPrintError("[G10] [Server] The listening socket was unable to bind\n");
+        g_print_error("[G10] [Server] The listening socket was unable to bind\n");
     return 0;
 
     // Couldn't start the socket
     noListening:
-        gPrintError("[G10] [Server] The listening socket could not be started\n");
+        g_print_error("[G10] [Server] The listening socket could not be started\n");
     return 0;
 }
 
-int listenForConnections ( GXServer_t* server )
+int         listen_for_connections ( GXServer_t* server )
 {
-    gPrintLog("[G10] [Server] Listening for new TCP connections on port %d\n",htons(server->serverAddress->sin_port));
+    g_print_log("[G10] [Server] Listening for new TCP connections on port %d\n",htons(server->serverAddress->sin_port));
     while(1)
     {
         GXClient_t *client  = server->clients;
         
-        GXClient_t *pClient = acceptClient( server );
+        GXClient_t *pClient = accept_client( server );
 
-        if( server->playerCount > server->maxPlayers)
-            declineClient(pClient, "The server is currently full\n");
+        // TODO:
+        if( server->playerCount > server->maxPlayers);
+            //decline_client(pClient, "The server is currently full\n");
             
 
-        appendClient(server, );
+        append_client(server, pClient);
 
         while(client)
         {
             if(client->connected == false)
-                removeClient(server, client->name);
+                remove_client(server, client->name);
             client = client->next;   
         }
     }
 }
 
-int appendClient ( GXServer_t* server, GXClient_t* client )
+int         append_client          ( GXServer_t* server, GXClient_t *client )
 {
     // Set the pointer to the head of the linked list
     GXClient_t* i = server->clients;
@@ -263,12 +274,12 @@ int appendClient ( GXServer_t* server, GXClient_t* client )
     
     duplicateName:
     #ifndef NDEBUG
-        printf("\033[31mClient \"%s\" can not be appended to \"%s\" because an entity with that name already exists\033[m\n", client->name, server->name);
+        printf("\033[31mClient \"%s\" can not be appended to \"%s\" because a client with that name already exists\033[m\n", client->name, server->name);
     #endif    
     return 0;
 }
 
-GXClient_t* getClient ( GXServer_t *server, const char* name )
+GXClient_t *get_client             ( GXServer_t *server, const char *name )
 {
     // Create a pointer to the head of the list
     GXClient_t* i = server->clients;
@@ -300,25 +311,31 @@ GXClient_t* getClient ( GXServer_t *server, const char* name )
     return 0;
 }
 
-int kickClient ( GXServer_t *server, const char* name, char* message )
+int         kick_client            ( GXServer_t *server, const char *name, char *message )
 {
     // Get a pointer to the GXClient struct
-    GXClient_t* client = getClient(server,name);
+    GXClient_t* client = get_client(server,name);
 
     // Notify the user that they have been banned
-    TCPSend(client,message,strlen(message)+1);
+    tcp_send(client,message,strlen(message)+1);
 
     // Remove the client from the server list 
-    removeClient(server, name);
+    remove_client(server, name);
 
     // Destroy the client
-    destroyClient(client);
+    destroy_client(client);
     
     // Return
     return 0;
 }
+        
+int         ban_client             ( GXServer_t *server, const char *name, char *message )
+{
+    remove_client(server, name);
 
-int removeClient ( GXServer_t *server, const char* name )
+}
+        
+int         remove_client          ( GXServer_t *server, const char* name )
 {
     // Create a pointer to the head of the list
     GXClient_t* i = server->clients;
@@ -344,7 +361,7 @@ int removeClient ( GXServer_t *server, const char* name )
             
             // Verbose logging
             #ifndef NDEBUG
-                gPrintLog("Removed Client \"%s\" from server \"%s\"\n", name, server->name);
+                g_print_log("Removed Client \"%s\" from server \"%s\"\n", name, server->name);
             #endif
             
             // Stitch up the linked list 
@@ -363,19 +380,19 @@ int removeClient ( GXServer_t *server, const char* name )
     // There are no clients on the server at all
     noClients:
     #ifndef NDEBUG
-        gPrintLog("There are no clients in \"%s\".\n", server->name);
+        g_print_log("[G10] [Server] There are no clients in \"%s\".\n", server->name);
     #endif
     return 0;
 
     // There is no matching client
     noMatch:
     #ifndef NDEBUG
-        gPrintWarning("There is no client on \"%s\" named \"%s\".\n", server->name, name);
+        g_print_warning("[G10] [Server] There is no client on \"%s\" named \"%s\".\n", server->name, name);
     #endif
     return 0;
 }
-
-int destroyServer ( GXServer_t* server )
+        
+int         destroy_server         ( GXServer_t* server )
 {
     // Free the name
     free(server->name);
@@ -401,7 +418,7 @@ int destroyServer ( GXServer_t* server )
     {
         GXClient_t* j = i;
         i = i->next;
-        destroyClient(j);
+        destroy_client(j);
     }
 
     server->clients                        = 0;

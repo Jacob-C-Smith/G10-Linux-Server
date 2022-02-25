@@ -13,6 +13,9 @@
 #include <G10/GXtypedef.h>
 #include <G10/GXClient.h>
 #include <G10/GXJSON.h>
+#include <G10/GXPhysics.h>
+
+#include <G10/GXEntity.h>
 
 #define WAIT_SIZE 16
 
@@ -20,30 +23,46 @@ struct GXServer_s
 {
     char               *name,
                        *password;
+    bool                running;
 	int                 listenSocket,
                         playerCount,
                         maxPlayers;
     time_t              startTime;
     struct sockaddr_in *serverAddress;
     GXClient_t         *clients;
-    pthread_t           listeningThread;
+    pthread_t           listeningThread,
+                        tickThread;
+
+    size_t              ticks,
+                        tick_rate;
+
+    // Actors are dynamic entites
+    GXEntity_t        **actors;
 
     struct GXServer_s  *next;
 };
- 
-GXServer_t* createServer         ( );                                                           // ✅ Creates an empty server
 
-GXServer_t* loadServer           ( const char* path );                                          // ✅ Loads a server from a path
-GXServer_t* loadServerAsJSON     ( char*       token );                                         // ✅ Loads a server from a JSON token
+// Allocators
+GXServer_t* create_server         ( void );                                                           // ✅ Creates an empty server
 
-int         listenForConnections ( GXServer_t* server );                                        // ✅ Start in a new thread. Listens for connections to server. Creates, populates, and appends a new GXClient on connection.
+// Constructors
+GXServer_t* load_server           ( const char* path );                                          // ✅ Loads a server from a path
+GXServer_t* load_server_as_json     ( char*       token );                                         // ✅ Loads a server from a JSON token
 
-int         appendClient         ( GXServer_t* server, GXClient_t* client );                    // ✅ Appends a client to a servers client list
+// Listener thread
+int         listen_for_connections ( GXServer_t* server );                                        // ✅ Start in a new thread. Listens for connections to server. Creates, populates, and appends a new GXClient on connection.
 
-GXClient_t* getClient            ( GXServer_t* server, const char* name );                      // ✅ Finds a client by name
+// Appenders
+int         append_client         ( GXServer_t* server, GXClient_t* client );                    // ✅ Appends a client to a servers client list
 
-int         kickClient           ( GXServer_t *server, const char* name, char* message );       // ✅ Kicks a client off with a custom error message
+// Getters
+GXClient_t* get_client            ( GXServer_t* server, const char* name );                      // ✅ Finds a client by name
 
-int         removeClient         ( GXServer_t* server, const char* name );                      // ✅ Removes a client from the server list
+// Client operations
+int         kick_client           ( GXServer_t *server, const char* name, char* message );       // ✅ Kicks a client off with a custom error message
 
-int         destroyServer        ( GXServer_t* server );                                        // ✅ Destroys a server
+// Removers
+int         remove_client         ( GXServer_t* server, const char* name );                      // ✅ Removes a client from the server list
+
+// Destructors
+int         destroy_server        ( GXServer_t* server );                                        // ✅ Destroys a server

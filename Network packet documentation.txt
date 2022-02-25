@@ -1,0 +1,83 @@
+┌────────────────────────────────┬──────────────────────────────────────────────────────────────────────┬────────┐
+│ Command name                   │ Command description                                                  │ Code   │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────────────┼────────┤
+│ No Operation                   │ Does nothing                                                         │ 0x0000 │
+│ Initialize actor               │ Tell the client to start keeping track of an actor                   │ 0x0033 │
+│ Actor location and rotation    │ Update the location and roatation of an actor                        │ 0x0055 │
+│ Connect                        │ Requires a name. Permits a list of player names in the clients party │ 0x0077 │
+│ Actor displacement derivatives │ Update displacement derivatives of an actor                          │ 0x00AA │
+│ Chat                           │ Text chat, ALL, TEAM, PARTY, or COMMAND                              │ 0x00FF │
+│ Displace and rotate            │                                                                      │ 0x7700 │
+│ Network statistics             │ Sends the number of recieved commands from the client in a timeframe │ 0xAA00 │
+│ Remove actor                   │ Tells a client to stop keeping track of an actor                     │ 0xCC00 │
+│ Disconnect                     │ Removes the player from the server.                                  │ 0xFF00 │
+└────────────────────────────────┴──────────────────────────────────────────────────────────────────────┴────────┘
+
+┌───────┐
+│ NO OP │
+└───────┘
+ 
+ No operation packet. Sent if the client or server doesn't say anything for too long. 
+
+Byte 0: 0x00
+Byte 1: 0x00
+
+┌──────────────────┐
+│ Initialize actor │
+└──────────────────┘
+ 
+ Tells the client to start keeping track of an actor. Server must specify entity and index
+ 
+Bytes 0------1 : 0x0033
+
+Bytes 2------3 : u16 index
+
+Bytes 4----7   : f32 location.x
+Bytes 8----11  : f32 location.y
+Bytes 12---15  : f32 location.z
+
+Byte  16---19  : f32 rotation.x
+Byte  20---23  : f32 rotation.y
+Byte  24---27  : f32 rotation.z
+
+Byte  28---31  : f32 velocity.x
+Byte  32---35  : f32 velocity.y
+Byte  36---39  : f32 velocity.z
+
+Byte  40       : name[0]
+
+.....
+
+Byte n-1: name[last]
+
+Byte n:   0x00
+
+┌─────────────────────────────┐
+│ Actor location and rotation │
+└─────────────────────────────┘
+ 
+ Tells the client to update the location and rotation of an actor at the specified index
+ 
+Bytes 0------1 : 0x0033
+
+Bytes 2------3 : u16 index
+
+Bytes 4----7   : f32 location.x
+Bytes 8----11  : f32 location.y
+Bytes 12---15  : f32 location.z
+
+Byte  16---19  : f32 rotation.x
+Byte  20---23  : f32 rotation.y
+Byte  24---27  : f32 rotation.z
+
+┌──────────────────┐
+│ Connect          │
+└──────────────────┘
+
+
+ Actor displacement derivatives
+ Chat                          
+ Displace and rotate           
+ Network statistics            
+ Remove actor                  
+ Disconnect                    

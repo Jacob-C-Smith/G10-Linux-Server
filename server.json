@@ -20,5 +20,6 @@
             "expiation" : 0,
             "note"      : "Permabanned for being a bot"
         }
-    ] 
+    ],
+    "tick rate"   : 50
 }

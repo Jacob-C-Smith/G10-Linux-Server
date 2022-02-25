@@ -1,0 +1,19 @@
+The G10 Linux server terminal.
+
+uptime    ,[u] - Prints how long the server has been up for
+   
+name      ,[n] - Prints the name of the server
+   
+clients   ,[c] - Prints a list of clients, IP addresses, and play time
+  
+shutdown  ,[q] - Shuts the server down
+ 
+kick      ,[k] - Kicks a player
+ 
+ban       ,[b] - Bans a player
+ 
+unban     ,[r] - Unbans a player
+broadcast ,[B] - Broadcasts a message to all clients
+
+// Displays commands and contexts
+help

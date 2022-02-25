@@ -1,6 +1,6 @@
 #include <G10/GXClient.h>
 
-GXClient_t* createClient  ( )
+GXClient_t  *create_client  ( )
 {
     // Initialized data
     GXClient_t* ret                    = calloc(1, sizeof(GXClient_t));
@@ -16,7 +16,7 @@ GXClient_t* createClient  ( )
     ret->clientAddress->sin_port        = 0;
 
     // Initialize the client thread
-    ret->clientThread                  = 0;
+    ret->client_thread                  = 0;
 
     // Set next to nullptr
     ret->next                          = 0;
@@ -24,7 +24,7 @@ GXClient_t* createClient  ( )
     return ret;
 }
 
-GXClient_t* acceptClient ( GXServer_t *server )
+GXClient_t  *accept_client ( GXServer_t *server )
 {
     // Uninitialized data
     size_t       len;
@@ -32,58 +32,70 @@ GXClient_t* acceptClient ( GXServer_t *server )
     JSONValue_t* tokens;   
 
     // Initiailzed data
-    GXClient_t* ret    = createClient();
+    GXClient_t* ret    = create_client();
     char*       buffer = calloc(MAX_BUFFER_SIZE,sizeof(char));
 
     // Accept a connection and create a new socket
-    ret->clientSocket = accept(server->listenSocket, ret->clientAddress, &ret->clientAddressLength );
+    ret->clientSocket = accept((int)server->listenSocket, ret->clientAddress, &ret->clientAddressLength );
 
     // Check the socket
     if(ret->clientSocket < 0)
         goto noSocket;
 
-    gPrintLog("[G10] [Client] Connection from %s\n", inet_ntoa(ret->clientAddress->sin_addr));
+    g_print_log("[G10] [Client] Connection from %s\n", inet_ntoa(ret->clientAddress->sin_addr));
     
     // Set the join time
     ret->joinTime = time(NULL);
 
-    // Get the clients message
-    while(ret->name == 0)
-    {
-        recv(ret->clientSocket, buffer, MAX_BUFFER_SIZE,0);
-
-        parsePacket(ret, buffer);
-    }
-
     ret->connected = true;
 
     // Create a new thread for listening
-    ret->clientThread = pthread_create(&ret->clientThread,NULL,&clientThread,ret);
+    ret->client_thread = pthread_create(&ret->client_thread,NULL,&client_thread,ret);
     
     return ret;
     noSocket:
-        gPrintWarning("[G10] [Client] Couldn't create a socket for client\n");
+        g_print_warning("[G10] [Client] Couldn't create a socket for client\n");
         return 0;
 }
 
-int clientThread (GXClient_t *client)
+int          client_thread (GXClient_t *client)
 {
-    while(client->connected)
-    {
-        recv(client->clientSocket, client->inBuffer, MAX_BUFFER_SIZE, 0);
 
-        parsePacket(client, client->inBuffer);
+    // Run while the client is connected
+    while ( client->connected )
+    {
+        // Grab the commands from the socket
+        recv_commands(client);
+        
+        // Parse the commands
+        parse_packet(client, client->inBuffer);
+
+        // Flush the command buffer to the socket
+        flush_commands(client);
+
+        // Null out the buffer
         memset(client->inBuffer, 0, MAX_BUFFER_SIZE);
     }
+
+    // Log the client's disconnection
+    g_print_log("[G10] [Client] Client \"%s\" disconnected\n",(client->name) ? client->name : "[No name]");
+
     return 0;
 }
 
-int declineClient ( GXClient_t *client, const char* message )
+int          flush_commands            ( GXClient_t *client )
 {
-   tcp
-}
+    
+    return 0;
+} 
 
-int TCPRecv ( GXClient_t* client, char* buffer, size_t len ) {
+int          recv_commands             ( GXClient_t *client )
+{
+    recv(client->clientSocket, client->inBuffer, MAX_BUFFER_SIZE, 0);
+    return 0;
+}   
+
+int          tcp_recv ( GXClient_t* client, char* buffer, size_t len ) {
     int ret;
     while ((ret = recv(client->clientSocket, buffer, len, 0)) > 0)
     {
@@ -102,14 +114,13 @@ int TCPRecv ( GXClient_t* client, char* buffer, size_t len ) {
     }
     return ret;
 }
-
-int TCPSend ( GXClient_t* client, char* buffer, size_t len )
+        
+int          tcp_send ( GXClient_t* client, char* buffer, size_t len )
 {
     return send(client->clientSocket, buffer,len,0);			
 }
-
-
-int destroyClient ( GXClient_t* client )
+        
+int          destroy_client ( GXClient_t* client )
 {
     // Free the name
     free(client->name);

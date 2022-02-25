@@ -1,6 +1,6 @@
 #include <G10/G10.h>
 
-size_t gLoadFile(const char* path, void* buffer)
+size_t g_load_file     ( const char* path, void* buffer )
 {
     // Argument checking 
     {
@@ -36,19 +36,19 @@ size_t gLoadFile(const char* path, void* buffer)
     {
         noPath:
         #ifndef NDEBUG
-            gPrintError("[G10] Null path provided to funciton \"%s\\n",__PRETTY_FUNCTION__);
+            g_print_error("[G10] Null path provided to funciton \"%s\\n",__PRETTY_FUNCTION__);
         #endif
         return 0;
         
         invalidFile:
         #ifndef NDEBUG
-            gPrintError("[G10] Failed to load file \"%s\"\n",path);
+            g_print_error("[G10] Failed to load file \"%s\"\n",path);
         #endif
         return 0;
     }
 }
 
-int gPrintError( const char* const format, ... )
+int    g_print_error   ( const char* const format, ... )
 {
     // We use the varadic argument list in vprintf
     va_list aList;
@@ -65,8 +65,8 @@ int gPrintError( const char* const format, ... )
 
     return 0;
 }
-
-int gPrintWarning(const char* const format, ...)
+   
+int    g_print_warning ( const char* const format, ... )
 {
     // We use the varadic argument list in vprintf
     va_list aList;
@@ -83,8 +83,8 @@ int gPrintWarning(const char* const format, ...)
 
     return 0;
 }
-
-int gPrintGray ( const char* const format, ... )
+   
+int    g_print_gray    ( const char* const format, ... )
 {
     // We use the varadic argument list in vprintf
     va_list aList;
@@ -101,8 +101,8 @@ int gPrintGray ( const char* const format, ... )
 
     return 0;
 }
-
-int gPrintLog ( const char* const format, ... )
+   
+int    g_print_log     ( const char* const format, ... )
 {
     // We use the varadic argument list in vprintf
     va_list aList;

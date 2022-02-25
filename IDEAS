@@ -1,0 +1,4 @@
+Store entities with rigidbodies in a seperate bounding volume heierarchy.
+Navigate bvh to find actors in the immediate area of clients
+Generate actor packets
+Append to queue
